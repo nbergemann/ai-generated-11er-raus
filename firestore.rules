@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Disables access to all collections by default, explicitly including get, list, and delete
+    match /{document=**} {
+      allow read, write, get, list, delete: if false;
+    }
+
+    // Specific rules for the 'games' collection
+    match /games/{gameId} {
+      // Allows creation of a document
+      allow create: if request.auth != null;  // assuming users are authenticated
+
+      // Allows reading and updating a document, explicitly excluding list and delete
+      allow read, update: if request.auth != null && resource != null;
+      allow get: if request.auth != null && resource != null;
+      allow list, delete: if false;  // explicitly disallowing list and delete operations
+    }
+  }
+}
+
