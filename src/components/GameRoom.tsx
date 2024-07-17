@@ -105,6 +105,17 @@ export const GameRoom: React.FC<GameRoomProps> = ({ currentPlayer }) => {
   };
 
 
+  const handleStartGame = async () => {
+    if (game && gameId) {
+      try {
+        await gameService.startGame(gameId);
+      } catch (error) {
+        console.error('Failed to start game:', error);
+      }
+    }
+  };
+
+
 
 
   const handleReturnToLobby = () => {
@@ -118,11 +129,17 @@ export const GameRoom: React.FC<GameRoomProps> = ({ currentPlayer }) => {
   const isCurrentPlayerTurn = game.players[game.currentPlayerIndex].playerId === currentPlayer.playerId;
   const currentPlayerInGame = game.players.find(p => p.playerId === currentPlayer.playerId);
   const canEndTurn = playedCards > 0 || drawnCards >= 3 || (game.getValidCards(currentPlayerInGame!).length <1 && game.deck.remainingCards < 1);
-
+  const isHost = game.players[0].playerId === currentPlayer.playerId;
+  const canStartGame = isHost && game.players.length >= 2 && game.status === 'waiting';
 
   return (
     <Box>
       <Typography variant="h4">Game Room: {gameId}</Typography>
+      {game.status === 'waiting' && canStartGame && (
+        <Button onClick={handleStartGame} variant="contained" color="primary">
+          Start Game
+        </Button>
+      )}
       {game.status !== 'finished' && (
         <>
           <GameBoard board={game.board.getSequences()} />

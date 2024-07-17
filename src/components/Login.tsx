@@ -1,13 +1,16 @@
+// src/components/Login.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/AuthService';
 import { useGameContext } from '../context/GameContext';
 import { Player } from '../models/Player';
-import { TextField, Button, Typography, Box, Divider, Paper } from '@mui/material';
+import { TextField, Button, Typography, Box, Divider, Paper, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [showNameDialog, setShowNameDialog] = useState(false);
   const navigate = useNavigate();
   const { setCurrentPlayer } = useGameContext();
   const authService = new AuthService();
@@ -16,8 +19,12 @@ export const Login: React.FC = () => {
     e.preventDefault();
     try {
       const user = await authService.signIn(email, password);
-      setCurrentPlayer(new Player(user.uid, user.email || 'Anonymous'));
-      navigate('/');
+      if (user.displayName) {
+        setCurrentPlayer(new Player(user.uid, user.displayName));
+        navigate('/');
+      } else {
+        setShowNameDialog(true);
+      }
     } catch (error) {
       console.error('Login failed:', error);
     }
@@ -26,10 +33,21 @@ export const Login: React.FC = () => {
   const handleAnonymousLogin = async () => {
     try {
       const user = await authService.signInAnonymously();
-      setCurrentPlayer(new Player(user.uid, 'Anonymous Player'));
-      navigate('/');
+      setShowNameDialog(true);
     } catch (error) {
       console.error('Anonymous login failed:', error);
+    }
+  };
+
+  const handleNameSubmit = async () => {
+    if (displayName.trim()) {
+      const user = authService.getCurrentUser();
+      if (user) {
+        await authService.updateProfile(user, { displayName });
+        setCurrentPlayer(new Player(user.uid, displayName));
+        setShowNameDialog(false);
+        navigate('/');
+      }
     }
   };
 
@@ -78,6 +96,27 @@ export const Login: React.FC = () => {
           Play Anonymously
         </Button>
       </Paper>
+
+      <Dialog open={showNameDialog} onClose={() => setShowNameDialog(false)}>
+        <DialogTitle>Enter Display Name</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Display Name"
+            type="text"
+            fullWidth
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNameDialog(false)}>Cancel</Button>
+          <Button onClick={handleNameSubmit} color="primary">
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

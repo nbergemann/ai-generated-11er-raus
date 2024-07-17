@@ -19,7 +19,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged((user) => {
       if (user) {
-        setCurrentPlayer(new Player(user.uid, user.email || 'Anonymous'));
+        if (user.displayName) {
+          setCurrentPlayer(new Player(user.uid, user.displayName));
+        } else {
+          setCurrentPlayer(null); // This will trigger the name prompt in AuthWrapper
+        }
       } else {
         setCurrentPlayer(null);
       }

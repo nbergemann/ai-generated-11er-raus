@@ -1,4 +1,4 @@
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User, signInAnonymously } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, User, signInAnonymously, updateProfile } from 'firebase/auth';
 
 export class AuthService {
   async signInAnonymously(): Promise<User> {
@@ -26,5 +26,9 @@ export class AuthService {
 
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     return this.auth.onAuthStateChanged(callback);
+  }
+
+  async updateProfile(user: User, profile: { displayName?: string; photoURL?: string }): Promise<void> {
+    await updateProfile(user, profile);
   }
 }
